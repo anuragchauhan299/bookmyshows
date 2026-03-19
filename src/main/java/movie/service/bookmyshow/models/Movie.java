@@ -1,17 +1,34 @@
 package movie.service.bookmyshow.models;
 
-import jakarta.persistence.Entity;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.util.HashMap;
+import java.util.Map;
+
+@Builder
 @Data
 @Entity
-public class Movie extends BaseModel{
+@NoArgsConstructor
+@AllArgsConstructor
+public class Movie extends BaseModel {
 
     private String name;
     private String genre;
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    public String getGenre() { return genre; }
-    public void setGenre(String genre) { this.genre = genre; }
+    @Column(nullable = false)
+    private String title;
+
+    @Column(length = 2000)
+    private String description;
+
+    @ElementCollection
+    @CollectionTable(name = "movie_localized_titles", joinColumns = @JoinColumn(name = "movie_id"))
+    @MapKeyColumn(name = "locale")
+    @Column(name = "localized_title")
+    @Builder.Default
+    private Map<String, String> localizedTitles = new HashMap<>();
 }

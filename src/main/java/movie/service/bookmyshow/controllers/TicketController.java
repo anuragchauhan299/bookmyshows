@@ -3,24 +3,34 @@ package movie.service.bookmyshow.controllers;
 
 import movie.service.bookmyshow.dtos.BookTicketRequestDto;
 import movie.service.bookmyshow.dtos.BookTicketResponseDto;
+import movie.service.bookmyshow.dtos.PaymentDto;
 import movie.service.bookmyshow.exceptions.BookTicketRequestValidationException;
 import movie.service.bookmyshow.exceptions.InvalidUser;
 import movie.service.bookmyshow.exceptions.SeatsAlreadyBookedException;
 import movie.service.bookmyshow.models.Ticket;
+import movie.service.bookmyshow.paymentgateway.PaymentRequest;
+import movie.service.bookmyshow.paymentgateway.PaymentResult;
+import movie.service.bookmyshow.services.PaymentService;
 import movie.service.bookmyshow.services.TicketService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
 
 @RestController
 public class TicketController {
 
     private final TicketService ticketService;
+    private final PaymentService paymentService;
 
     @Autowired
-    public TicketController(TicketService ticketService) {
+    public TicketController(TicketService ticketService, PaymentService paymentService) {
         this.ticketService = ticketService;
+        this.paymentService = paymentService;
     }
 
     @PostMapping("/bookTicket")
@@ -36,6 +46,32 @@ public class TicketController {
             return BookTicketResponseDto.getFailureResponse(e.getMessage());
         }
 
+    }
+
+    @PostMapping("/{id}/confirm")
+    public ResponseEntity<Ticket> confirmBooking(@PathVariable Integer id, @RequestBody PaymentDto dto) {
+        PaymentResult result = paymentService.processPayment(
+                PaymentRequest.builder()
+                        .bookingReference("")
+                        .amount(dto.getAmount())
+                        .currency("INR")
+                        .customerEmail(dto.getEmail())
+                        .customerPhone(dto.getPhone())
+                        .metadata(Map.of("bookingId", id))
+                        .build()
+        );
+
+        if (result.isSuccess()) {
+            Ticket booking = ticketService.confirmBooking(id, result.getPaymentId(), "stripe");
+            return ResponseEntity.ok(booking);
+        }
+        return ResponseEntity.badRequest().build();
+    }
+
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<Ticket> cancelBooking(@PathVariable Integer id) {
+        Ticket booking = ticketService.cancelBooking(id);
+        return ResponseEntity.ok(booking);
     }
 
     private void validateRequest(BookTicketRequestDto dto) throws BookTicketRequestValidationException{

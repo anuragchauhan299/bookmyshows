@@ -17,6 +17,7 @@ public interface ShowSeatRepository extends JpaRepository<ShowSeat, Integer> {
     @Lock(value = LockModeType.PESSIMISTIC_READ)
     List<ShowSeat> findByIdInAndSeatStatus(List<Integer> showSeatIds, SeatStatus seatStatus);
 
+    List<ShowSeat> findByShowId(int showId);
 
 
 }

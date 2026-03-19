@@ -1,22 +1,25 @@
 package movie.service.bookmyshow.services;
 
 
+import movie.service.bookmyshow.constants.AppConstants;
+import movie.service.bookmyshow.exceptions.BookingException;
 import movie.service.bookmyshow.exceptions.InvalidUser;
 import movie.service.bookmyshow.exceptions.SeatsAlreadyBookedException;
 import movie.service.bookmyshow.models.*;
+import movie.service.bookmyshow.properties.BookingProperties;
 import movie.service.bookmyshow.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Time;
-import java.text.SimpleDateFormat;
-import java.time.DayOfWeek;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.*;
+
+import static movie.service.bookmyshow.models.BookingStatus.BOOKED;
+import static movie.service.bookmyshow.models.BookingStatus.CANCELLED;
 
 @Service
 public class TicketServiceImpl implements TicketService{
@@ -25,17 +28,19 @@ public class TicketServiceImpl implements TicketService{
     private final UserRepository userRepository;
     private final SeatTypeShowRepository seatTypeShowRepository;
     private final SeatsRepository seatsRepository;
+    private final BookingProperties bookingProperties;
 
     private final TicketRepository ticketRepository;
 
     private static int count =0;
 
     @Autowired
-    public TicketServiceImpl(ShowSeatRepository showSeatRepository, UserRepository userRepository, SeatTypeShowRepository seatTypeShowRepository, SeatsRepository seatsRepository, TicketRepository ticketRepository) {
+    public TicketServiceImpl(ShowSeatRepository showSeatRepository, UserRepository userRepository, SeatTypeShowRepository seatTypeShowRepository, SeatsRepository seatsRepository, BookingProperties bookingProperties, TicketRepository ticketRepository) {
         this.showSeatRepository = showSeatRepository;
         this.userRepository = userRepository;
         this.seatTypeShowRepository = seatTypeShowRepository;
         this.seatsRepository = seatsRepository;
+        this.bookingProperties = bookingProperties;
         this.ticketRepository = ticketRepository;
     }
 
@@ -49,7 +54,8 @@ public class TicketServiceImpl implements TicketService{
         }
         //Get User
         User user = userOptional.get();
-
+        validateSeatLimit(showSeatIds);
+        validateUserBookingLimit(user.getId());
         List<ShowSeat> showSeats = checkAndBlockSeats(showSeatIds, user);
 
 
@@ -83,6 +89,7 @@ public class TicketServiceImpl implements TicketService{
         ticket.setShow(show);
         ticket.setSeats(seats);
         ticket.setTimeOfBooking(new Date());
+        ticket.setBookingStatus(BookingStatus.BLOCKED);
         return ticketRepository.save(ticket);
     }
 
@@ -117,5 +124,63 @@ public class TicketServiceImpl implements TicketService{
             showSeatRepository.save(showSeat);
         }
         return showSeats;
+    }
+
+    private void validateSeatLimit(List<Integer> seatNumbers) {
+        int maxSeats = bookingProperties.getMaxSeatsPerBooking();
+        if (seatNumbers.size() > maxSeats) {
+            throw new BookingException(String.format(AppConstants.ErrorMessage.MAX_SEATS_EXCEEDED, maxSeats));
+        }
+    }
+
+    private void validateUserBookingLimit(int userId) {
+        int maxBookings = bookingProperties.getMaxBookingsPerUserPerDay();
+        LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
+        long todayBookings = ticketRepository.countConfirmedBookingsLast24Hours(userId, startOfDay);
+        if (todayBookings >= maxBookings) {
+            throw new BookingException(String.format(AppConstants.ErrorMessage.MAX_BOOKINGS_EXCEEDED, maxBookings));
+        }
+    }
+    @Transactional
+    public Ticket confirmBooking(Integer ticketId, String paymentId, String paymentGateway) {
+        Ticket booking = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new BookingException(AppConstants.ErrorMessage.BOOKING_NOT_FOUND + ticketId));
+
+        if (booking.getBookingStatus() != null && booking.getBookingStatus() != BOOKED) {
+            throw new BookingException(AppConstants.ErrorMessage.BOOKING_NOT_PENDING);
+        }
+
+        booking.setBookingStatus(BOOKED);
+        booking.setId(Integer.parseInt(paymentId));
+        booking.setTimeOfBooking(new Date());
+
+        return ticketRepository.save(booking);
+    }
+
+    @Transactional
+    public Ticket cancelBooking(int ticketId) {
+        Ticket booking = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new BookingException(AppConstants.ErrorMessage.BOOKING_NOT_FOUND + ticketId));
+
+        if (booking.getBookingStatus() == CANCELLED) {
+            throw new BookingException(AppConstants.ErrorMessage.BOOKING_ALREADY_CANCELLED);
+        }
+
+        if (booking.getBookingStatus() == BOOKED) {
+            double refundAmount = calculateRefund(booking);
+            booking.setPrice(refundAmount);
+            booking.setPaymentStatus(PaymentStatus.REFUNDED);
+        }
+
+        List<ShowSeat> showSeatList = showSeatRepository.findByShowId(booking.getShow().getId());
+        for (ShowSeat showSeat : showSeatList) {
+             showSeat.setSeatStatus(SeatStatus.AVAILABLE);
+            showSeatRepository.save(showSeat);
+        }
+        booking.setBookingStatus(BookingStatus.CANCELLED);
+        return ticketRepository.save(booking);
+    }
+    private double calculateRefund(Ticket booking) {
+        return booking.getPrice();
     }
 }

@@ -3,7 +3,6 @@ package movie.service.bookmyshow.services;
 
 import movie.service.bookmyshow.models.BaseModel;
 import movie.service.bookmyshow.models.Movie;
-import movie.service.bookmyshow.models.Screen;
 import movie.service.bookmyshow.models.Theatre;
 import movie.service.bookmyshow.repositories.CityRepository;
 import movie.service.bookmyshow.repositories.MovieRepository;
