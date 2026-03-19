@@ -1,10 +1,9 @@
 package movie.service.bookmyshow.dtos;
 
-
-import lombok.Data;
+import lombok.Getter;
 import movie.service.bookmyshow.models.Ticket;
 
-@Data
+@Getter
 public class BookTicketResponseDto {
     private Response response;
     private Ticket ticket;
@@ -21,4 +20,8 @@ public class BookTicketResponseDto {
         dto.setResponse(Response.getFailureResponse(message));
         return dto;
     }
+
+    public void setResponse(Response response) { this.response = response; }
+
+    public void setTicket(Ticket ticket) { this.ticket = ticket; }
 }

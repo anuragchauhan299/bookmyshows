@@ -10,17 +10,25 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Time;
+import java.text.SimpleDateFormat;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.*;
 
 @Service
 public class TicketServiceImpl implements TicketService{
 
-    private ShowSeatRepository showSeatRepository;
-    private UserRepository userRepository;
-    private SeatTypeShowRepository seatTypeShowRepository;
-    private SeatsRepository seatsRepository;
+    private final ShowSeatRepository showSeatRepository;
+    private final UserRepository userRepository;
+    private final SeatTypeShowRepository seatTypeShowRepository;
+    private final SeatsRepository seatsRepository;
 
-    private TicketRepository ticketRepository;
+    private final TicketRepository ticketRepository;
+
+    private static int count =0;
 
     @Autowired
     public TicketServiceImpl(ShowSeatRepository showSeatRepository, UserRepository userRepository, SeatTypeShowRepository seatTypeShowRepository, SeatsRepository seatsRepository, TicketRepository ticketRepository) {
@@ -33,7 +41,7 @@ public class TicketServiceImpl implements TicketService{
 
     @Override
     public Ticket bookTicket(List<Integer> showSeatIds, int userId) throws SeatsAlreadyBookedException, InvalidUser {
-
+        count=0;
         Optional<User> userOptional = userRepository.findById(userId);
         if(userOptional.isEmpty()){
 
@@ -66,7 +74,7 @@ public class TicketServiceImpl implements TicketService{
 
         double totalAmount = 0.0d;
         for (ShowSeat showSeat : showSeats) {
-            totalAmount += priceMap.get(showSeat.getSeat().getSeatType());
+            totalAmount += calculateTotalPrice(priceMap.get(showSeat.getSeat().getSeatType()));
         }
 
         Ticket ticket = new Ticket();
@@ -76,6 +84,22 @@ public class TicketServiceImpl implements TicketService{
         ticket.setSeats(seats);
         ticket.setTimeOfBooking(new Date());
         return ticketRepository.save(ticket);
+    }
+
+    private double calculateTotalPrice(Double totalPrice) {
+        int size = ticketRepository.findAll().size();
+        double discountPrice = totalPrice;
+        if ((size+1)%3==0) {
+            discountPrice = discountPrice*50/100;
+        } else if (isNowBetweenNoonAndSixExclusive()) {
+            discountPrice = discountPrice*20/100;
+        }
+        return discountPrice;
+    }
+
+    public static boolean isNowBetweenNoonAndSixExclusive() {
+        LocalTime now = LocalTime.now(ZoneId.systemDefault());
+        return now.isAfter(LocalTime.NOON) && now.isBefore(LocalTime.of(18, 0));
     }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)

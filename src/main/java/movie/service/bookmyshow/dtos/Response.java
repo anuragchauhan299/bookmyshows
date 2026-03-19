@@ -1,8 +1,4 @@
 package movie.service.bookmyshow.dtos;
-
-import lombok.Data;
-
-@Data
 public class Response {
     private ResponseStatus responseStatus;
     private String message;
@@ -20,4 +16,9 @@ public class Response {
         response.setMessage(message);
         return response;
     }
+
+    public ResponseStatus getResponseStatus() { return responseStatus; }
+    public void setResponseStatus(ResponseStatus responseStatus) { this.responseStatus = responseStatus; }
+    public String getMessage() { return message; }
+    public void setMessage(String message) { this.message = message; }
 }

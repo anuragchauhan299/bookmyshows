@@ -10,17 +10,20 @@ import movie.service.bookmyshow.models.Ticket;
 import movie.service.bookmyshow.services.TicketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-@Controller
+@RestController
 public class TicketController {
 
-    private TicketService ticketService;
+    private final TicketService ticketService;
 
     @Autowired
     public TicketController(TicketService ticketService) {
         this.ticketService = ticketService;
     }
 
+    @PostMapping("/bookTicket")
     public BookTicketResponseDto bookTicket(BookTicketRequestDto dto){
         try {
             validateRequest(dto);
@@ -43,7 +46,7 @@ public class TicketController {
             throw new BookTicketRequestValidationException("Seats not selected");
         }
 
-        if(dto.getShowSeatIds().size() == 0){
+        if(dto.getShowSeatIds().isEmpty()){
             throw new BookTicketRequestValidationException("Atleast 1 seat should be selected");
         }
 

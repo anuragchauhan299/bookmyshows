@@ -1,9 +1,9 @@
 package movie.service.bookmyshow.models;
 
-import jakarta.persistence.*;
-import lombok.Data;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 
-@Data
 @Entity
 public class ShowSeat extends BaseModel{
 
@@ -16,4 +16,12 @@ public class ShowSeat extends BaseModel{
     @ManyToOne
     private User user;
 
+    public Show getShow() { return show; }
+    public void setShow(Show show) { this.show = show; }
+    public Seat getSeat() { return seat; }
+    public void setSeat(Seat seat) { this.seat = seat; }
+    public SeatStatus getSeatStatus() { return seatStatus; }
+    public void setSeatStatus(SeatStatus seatStatus) { this.seatStatus = seatStatus; }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 }
