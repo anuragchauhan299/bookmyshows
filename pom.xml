@@ -16,7 +16,13 @@
     <properties>
         <java.version>17</java.version>
     </properties>
-    <dependencies>
+<dependencies>
+  <!-- Flyway for DB migrations and seed data in local/dev environments -->
+  <dependency>
+    <groupId>org.flywaydb</groupId>
+    <artifactId>flyway-core</artifactId>
+    <version>9.20.0</version>
+  </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jdbc</artifactId>
@@ -90,14 +96,6 @@
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.10.1</version>
-                <configuration>
-                    <!-- Lombok processor removed to avoid compatibility issues -->
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>

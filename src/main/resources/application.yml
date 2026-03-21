@@ -1,4 +1,6 @@
 spring:
+  profiles:
+    active=local:
   datasource:
     url: jdbc:mysql://localhost:3306/bmsaug23?useSSL=false&serverTimezone=UTC&createDatabaseIfNotExist=true
     username: root

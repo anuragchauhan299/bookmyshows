@@ -9,6 +9,7 @@ import movie.service.bookmyshow.repositories.MovieRepository;
 import movie.service.bookmyshow.repositories.ShowRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -29,9 +30,9 @@ public class ShowServiceImpl implements ShowService {
     @Override
     public List<Theatre> getTheatresByCity(String cityName, Date date, String movieName) {
 
-        List<Theatre> theatreList = cityRepository.findByNameIgnoreCase(cityName);
+       // List<Theatre> theatreList = cityRepository.findByNameIgnoreCase(cityName);
 
-        List<Integer> screenList = theatreList.stream()
+      /*  List<Integer> screenList = theatreList.stream()
                 .flatMap(t -> t.getScreens().stream()).map(BaseModel::getId)
                 .toList();
 
@@ -47,7 +48,7 @@ public class ShowServiceImpl implements ShowService {
         List<Integer> screenId = showRepository.findScreenIdsForMovieAndScreensOnDate(movie.get().getId(),screenList,dt);
 
         theatreList = theatreList.stream().filter(s-> s.getScreens().stream().anyMatch(ss-> screenId.contains(ss.getId()))).toList();
-
-        return theatreList;
+*/
+        return new ArrayList<>();
     }
 }

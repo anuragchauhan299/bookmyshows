@@ -10,6 +10,10 @@ public class User extends BaseModel {
     private String email;
     private String password;
 
+    public int getId() {
+        return id;
+    }
+
     public String getName() {
         return name;
     }

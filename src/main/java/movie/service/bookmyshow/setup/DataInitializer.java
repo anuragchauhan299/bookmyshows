@@ -1,3 +1,4 @@
+/*
 package movie.service.bookmyshow.setup;
 
 import movie.service.bookmyshow.models.*;
@@ -213,3 +214,4 @@ public class DataInitializer implements CommandLineRunner {
         seatTypeShowRepository.save(platinum);
     }
 }
+*/

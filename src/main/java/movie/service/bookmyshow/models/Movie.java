@@ -16,7 +16,9 @@ import java.util.Map;
 @AllArgsConstructor
 public class Movie extends BaseModel {
 
+    @Column(nullable = false)
     private String name;
+    @Column(nullable = false)
     private String genre;
 
     @Column(nullable = false)
@@ -31,4 +33,21 @@ public class Movie extends BaseModel {
     @Column(name = "localized_title")
     @Builder.Default
     private Map<String, String> localizedTitles = new HashMap<>();
+
+    // Plain setters for environments without Lombok-generated accessors
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setGenre(String genre) {
+        this.genre = genre;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 }

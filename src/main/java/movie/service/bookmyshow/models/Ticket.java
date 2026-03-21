@@ -1,13 +1,11 @@
 package movie.service.bookmyshow.models;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.util.Date;
 import java.util.List;
 
 @Entity
+@Table(name = "tickets")
 public class Ticket extends BaseModel {
 
     @ManyToOne
@@ -20,53 +18,45 @@ public class Ticket extends BaseModel {
             joinColumns = @JoinColumn(name = "ticket_id"),
             inverseJoinColumns = @JoinColumn(name = "seat_id")
     )
-    @Getter
     private List<Seat> seats;
 
     @ManyToOne
     @JoinColumn(name = "show_id")
-    @Getter
     private Show show;
 
-    @Getter
     private Date timeOfBooking;
     private double price;
-    @Getter
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+
+    @Enumerated(EnumType.ORDINAL)
+    @Column(name = "booking_status", nullable = false)
     private BookingStatus bookingStatus;
-    @Getter
-    @Setter
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+
+    @Enumerated(EnumType.ORDINAL)
+    @Column(name = "payment_status", nullable = false)
     private PaymentStatus paymentStatus;
 
-    public double getPrice() {
-        return price;
-    }
+    // Getters / Setters
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
-    // Lombok-generated setters are not available in this environment; provide explicit setters for compatibility
-    public void setPrice(double price) {
-        this.price = price;
-    }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 
-    public void setUser(User user) {
-        this.user = user;
-    }
+    public List<Seat> getSeats() { return seats; }
+    public void setSeats(List<Seat> seats) { this.seats = seats; }
 
-    public void setShow(Show show) {
-        this.show = show;
-    }
+    public Show getShow() { return show; }
+    public void setShow(Show show) { this.show = show; }
 
-    public void setSeats(List<Seat> seats) {
-        this.seats = seats;
-    }
+    public Date getTimeOfBooking() { return timeOfBooking; }
+    public void setTimeOfBooking(Date timeOfBooking) { this.timeOfBooking = timeOfBooking; }
 
-    public void setTimeOfBooking(Date timeOfBooking) {
-        this.timeOfBooking = timeOfBooking;
-    }
+    public double getPrice() { return price; }
+    public void setPrice(double price) { this.price = price; }
 
-    public void setBookingStatus(BookingStatus bookingStatus) {
-        this.bookingStatus = bookingStatus;
-    }
+    public BookingStatus getBookingStatus() { return bookingStatus; }
+    public void setBookingStatus(BookingStatus bookingStatus) { this.bookingStatus = bookingStatus; }
+
+    public PaymentStatus getPaymentStatus() { return paymentStatus; }
+    public void setPaymentStatus(PaymentStatus paymentStatus) { this.paymentStatus = paymentStatus; }
 }

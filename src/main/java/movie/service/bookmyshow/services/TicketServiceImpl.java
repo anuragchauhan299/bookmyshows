@@ -55,7 +55,8 @@ public class TicketServiceImpl implements TicketService{
         //Get User
         User user = userOptional.get();
         validateSeatLimit(showSeatIds);
-        validateUserBookingLimit(user.getId());
+        // Use the provided userId to validate per-day booking limits
+        validateUserBookingLimit(userId);
         List<ShowSeat> showSeats = checkAndBlockSeats(showSeatIds, user);
 
 
