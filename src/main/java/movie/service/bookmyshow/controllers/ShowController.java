@@ -22,8 +22,8 @@ public class ShowController {
     }
 
     @GetMapping("/showTheatres")
-    public List<Theatre> showTheater(@RequestParam String cityName, @RequestParam String movieName, @RequestParam Date date){
+    public List<Theatre> showTheater(@RequestParam String cityName, @RequestParam String movieName, @RequestParam Date date) {
 
-        return showService.getTheatresByCity(cityName,date,movieName);
+        return showService.getTheatresByCity(cityName, date, movieName);
     }
 }

@@ -1,6 +1,6 @@
 package movie.service.bookmyshow.exceptions;
 
-public class SeatsAlreadyBookedException extends Exception{
+public class SeatsAlreadyBookedException extends Exception {
     public SeatsAlreadyBookedException() {
     }
 

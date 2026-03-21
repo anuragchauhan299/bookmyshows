@@ -32,14 +32,14 @@ public class TicketController {
     }
 
     @PostMapping("/bookTicket")
-    public BookTicketResponseDto bookTicket(BookTicketRequestDto dto){
+    public BookTicketResponseDto bookTicket(@RequestBody BookTicketRequestDto dto) {
         try {
             validateRequest(dto);
             Ticket ticket = ticketService.bookTicket(dto.getShowSeatIds(), dto.getUserId());
             return BookTicketResponseDto.getSuccessResponse(ticket);
-        }catch (BookTicketRequestValidationException | SeatsAlreadyBookedException | InvalidUser e){
+        } catch (BookTicketRequestValidationException | SeatsAlreadyBookedException | InvalidUser e) {
             return BookTicketResponseDto.getFailureResponse(e.getMessage());
-        }catch (Exception e){
+        } catch (Exception e) {
             System.out.println("Unhandled exception:" + e.getMessage());
             return BookTicketResponseDto.getFailureResponse(e.getMessage());
         }
@@ -72,19 +72,19 @@ public class TicketController {
         return ResponseEntity.ok(booking);
     }
 
-    private void validateRequest(BookTicketRequestDto dto) throws BookTicketRequestValidationException{
-        if(dto.getUserId() < 0){
-            throw  new BookTicketRequestValidationException("Invalid user id");
+    private void validateRequest(BookTicketRequestDto dto) throws BookTicketRequestValidationException {
+        if (dto.getUserId() < 0) {
+            throw new BookTicketRequestValidationException("Invalid user id");
         }
-        if(dto.getShowSeatIds() == null){
+        if (dto.getShowSeatIds() == null) {
             throw new BookTicketRequestValidationException("Seats not selected");
         }
 
-        if(dto.getShowSeatIds().isEmpty()){
+        if (dto.getShowSeatIds().isEmpty()) {
             throw new BookTicketRequestValidationException("Atleast 1 seat should be selected");
         }
 
-        if(dto.getShowSeatIds().size() > 10){
+        if (dto.getShowSeatIds().size() > 10) {
             throw new BookTicketRequestValidationException("More than 10 seats can not be selected");
         }
 

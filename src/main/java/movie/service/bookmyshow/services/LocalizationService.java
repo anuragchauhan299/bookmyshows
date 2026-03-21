@@ -1,6 +1,7 @@
 package movie.service.bookmyshow.services;
 
 // (no Lombok logging configured in this environment)
+
 import movie.service.bookmyshow.models.Movie;
 import movie.service.bookmyshow.repositories.MovieRepository;
 import org.springframework.stereotype.Service;

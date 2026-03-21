@@ -16,12 +16,4 @@ public class BookingProperties {
     private int maxSeatsPerBooking;
     private int maxBookingsPerUserPerDay;
 
-    // Explicit getters for environments without Lombok processing
-    public int getMaxSeatsPerBooking() {
-        return maxSeatsPerBooking;
-    }
-
-    public int getMaxBookingsPerUserPerDay() {
-        return maxBookingsPerUserPerDay;
-    }
 }

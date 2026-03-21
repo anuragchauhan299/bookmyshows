@@ -1,6 +1,6 @@
 package movie.service.bookmyshow.exceptions;
 
-public class InvalidUser extends Exception{
+public class InvalidUser extends Exception {
 
     public InvalidUser() {
     }

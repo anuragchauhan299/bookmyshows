@@ -14,13 +14,10 @@ import java.util.List;
 @Setter
 @RequiredArgsConstructor
 public class PaymentProperties {
+    // Fallback accessor if Lombok processing is disabled for any reason
     private String gateway;
     private int timeoutSeconds;
     private int retryAttempts;
     private List<String> enabledGateways;
 
-    // Fallback accessor if Lombok processing is disabled for any reason
-    public String getGateway() {
-        return gateway;
-    }
 }

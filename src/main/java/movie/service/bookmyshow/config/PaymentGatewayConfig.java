@@ -1,6 +1,5 @@
 package movie.service.bookmyshow.config;
 
-import lombok.RequiredArgsConstructor;
 import movie.service.bookmyshow.paymentgateway.PaymentGateway;
 import movie.service.bookmyshow.paymentgateway.RazorpayPaymentGateway;
 import movie.service.bookmyshow.paymentgateway.StripePaymentGateway;
@@ -9,10 +8,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@RequiredArgsConstructor
 public class PaymentGatewayConfig {
 
     private final PaymentProperties paymentProperties;
+
+    public PaymentGatewayConfig(PaymentProperties paymentProperties) {
+        this.paymentProperties = paymentProperties;
+    }
+
 
     @Bean
     public PaymentGateway paymentGateway() {

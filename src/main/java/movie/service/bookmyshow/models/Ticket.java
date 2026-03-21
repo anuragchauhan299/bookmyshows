@@ -1,11 +1,16 @@
 package movie.service.bookmyshow.models;
 
 import jakarta.persistence.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
 import java.util.Date;
 import java.util.List;
 
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "tickets")
+@Data
 public class Ticket extends BaseModel {
 
     @ManyToOne
@@ -34,29 +39,4 @@ public class Ticket extends BaseModel {
     @Enumerated(EnumType.ORDINAL)
     @Column(name = "payment_status", nullable = false)
     private PaymentStatus paymentStatus;
-
-    // Getters / Setters
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
-
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
-
-    public List<Seat> getSeats() { return seats; }
-    public void setSeats(List<Seat> seats) { this.seats = seats; }
-
-    public Show getShow() { return show; }
-    public void setShow(Show show) { this.show = show; }
-
-    public Date getTimeOfBooking() { return timeOfBooking; }
-    public void setTimeOfBooking(Date timeOfBooking) { this.timeOfBooking = timeOfBooking; }
-
-    public double getPrice() { return price; }
-    public void setPrice(double price) { this.price = price; }
-
-    public BookingStatus getBookingStatus() { return bookingStatus; }
-    public void setBookingStatus(BookingStatus bookingStatus) { this.bookingStatus = bookingStatus; }
-
-    public PaymentStatus getPaymentStatus() { return paymentStatus; }
-    public void setPaymentStatus(PaymentStatus paymentStatus) { this.paymentStatus = paymentStatus; }
 }

@@ -22,17 +22,15 @@ import static movie.service.bookmyshow.models.BookingStatus.BOOKED;
 import static movie.service.bookmyshow.models.BookingStatus.CANCELLED;
 
 @Service
-public class TicketServiceImpl implements TicketService{
+public class TicketServiceImpl implements TicketService {
 
+    private static int count = 0;
     private final ShowSeatRepository showSeatRepository;
     private final UserRepository userRepository;
     private final SeatTypeShowRepository seatTypeShowRepository;
     private final SeatsRepository seatsRepository;
     private final BookingProperties bookingProperties;
-
     private final TicketRepository ticketRepository;
-
-    private static int count =0;
 
     @Autowired
     public TicketServiceImpl(ShowSeatRepository showSeatRepository, UserRepository userRepository, SeatTypeShowRepository seatTypeShowRepository, SeatsRepository seatsRepository, BookingProperties bookingProperties, TicketRepository ticketRepository) {
@@ -44,11 +42,17 @@ public class TicketServiceImpl implements TicketService{
         this.ticketRepository = ticketRepository;
     }
 
+    public static boolean isNowBetweenNoonAndSixExclusive() {
+        LocalTime now = LocalTime.now(ZoneId.systemDefault());
+        return now.isAfter(LocalTime.NOON) && now.isBefore(LocalTime.of(18, 0));
+    }
+
     @Override
+    @Transactional
     public Ticket bookTicket(List<Integer> showSeatIds, int userId) throws SeatsAlreadyBookedException, InvalidUser {
-        count=0;
+        count = 0;
         Optional<User> userOptional = userRepository.findById(userId);
-        if(userOptional.isEmpty()){
+        if (userOptional.isEmpty()) {
 
             throw new InvalidUser("Invalid login");
         }
@@ -57,7 +61,18 @@ public class TicketServiceImpl implements TicketService{
         validateSeatLimit(showSeatIds);
         // Use the provided userId to validate per-day booking limits
         validateUserBookingLimit(userId);
-        List<ShowSeat> showSeats = checkAndBlockSeats(showSeatIds, user);
+        //List<ShowSeat> showSeats = checkAndBlockSeats(showSeatIds, user);
+        List<ShowSeat> showSeats = showSeatRepository.findByIdInAndSeatStatus(showSeatIds, SeatStatus.AVAILABLE);
+
+        if (showSeats == null || showSeats.size() != showSeatIds.size()) {
+            throw new SeatsAlreadyBookedException("The seats you are trying to book is already booked");
+        }
+
+        for (ShowSeat showSeat : showSeats) {
+            showSeat.setSeatStatus(SeatStatus.BLOCKED);
+            showSeat.setUser(user);
+            showSeatRepository.save(showSeat);
+        }
 
 
         //Get show
@@ -65,7 +80,7 @@ public class TicketServiceImpl implements TicketService{
 
         //Get seatIds
         List<Integer> seatIds = showSeats.stream()
-                .map( showSeat -> showSeat.getSeat().getId() )
+                .map(showSeat -> showSeat.getSeat().getId())
                 .toList();
         List<Seat> seats = seatsRepository.findByIdIn(seatIds);
 
@@ -75,7 +90,7 @@ public class TicketServiceImpl implements TicketService{
         List<SeatTypeShow> seatTypeShows = seatTypeShowRepository.findByShow_Id(show.getId());
 
         Map<SeatType, Double> priceMap = new EnumMap<>(SeatType.class);
-        for (SeatTypeShow sts: seatTypeShows){
+        for (SeatTypeShow sts : seatTypeShows) {
             priceMap.put(sts.getSeatType(), sts.getPrice());
         }
 
@@ -91,23 +106,19 @@ public class TicketServiceImpl implements TicketService{
         ticket.setSeats(seats);
         ticket.setTimeOfBooking(new Date());
         ticket.setBookingStatus(BookingStatus.BLOCKED);
+        ticket.setPaymentStatus(PaymentStatus.CAPTURED);
         return ticketRepository.save(ticket);
     }
 
     private double calculateTotalPrice(Double totalPrice) {
         int size = ticketRepository.findAll().size();
         double discountPrice = totalPrice;
-        if ((size+1)%3==0) {
-            discountPrice = discountPrice*50/100;
+        if ((size + 1) % 3 == 0) {
+            discountPrice = discountPrice * 50 / 100;
         } else if (isNowBetweenNoonAndSixExclusive()) {
-            discountPrice = discountPrice*20/100;
+            discountPrice = discountPrice * 20 / 100;
         }
         return discountPrice;
-    }
-
-    public static boolean isNowBetweenNoonAndSixExclusive() {
-        LocalTime now = LocalTime.now(ZoneId.systemDefault());
-        return now.isAfter(LocalTime.NOON) && now.isBefore(LocalTime.of(18, 0));
     }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
@@ -115,7 +126,7 @@ public class TicketServiceImpl implements TicketService{
         // First lets make sure that the tickets we are trying to book are available
         List<ShowSeat> showSeats = showSeatRepository.findByIdInAndSeatStatus(showSeatIds, SeatStatus.AVAILABLE);
 
-        if(showSeats ==null ||  showSeats.size() != showSeatIds.size()){
+        if (showSeats == null || showSeats.size() != showSeatIds.size()) {
             throw new SeatsAlreadyBookedException("The seats you are trying to book is already booked");
         }
 
@@ -142,6 +153,7 @@ public class TicketServiceImpl implements TicketService{
             throw new BookingException(String.format(AppConstants.ErrorMessage.MAX_BOOKINGS_EXCEEDED, maxBookings));
         }
     }
+
     @Transactional
     public Ticket confirmBooking(Integer ticketId, String paymentId, String paymentGateway) {
         Ticket booking = ticketRepository.findById(ticketId)
@@ -175,12 +187,13 @@ public class TicketServiceImpl implements TicketService{
 
         List<ShowSeat> showSeatList = showSeatRepository.findByShowId(booking.getShow().getId());
         for (ShowSeat showSeat : showSeatList) {
-             showSeat.setSeatStatus(SeatStatus.AVAILABLE);
+            showSeat.setSeatStatus(SeatStatus.AVAILABLE);
             showSeatRepository.save(showSeat);
         }
         booking.setBookingStatus(BookingStatus.CANCELLED);
         return ticketRepository.save(booking);
     }
+
     private double calculateRefund(Ticket booking) {
         return booking.getPrice();
     }

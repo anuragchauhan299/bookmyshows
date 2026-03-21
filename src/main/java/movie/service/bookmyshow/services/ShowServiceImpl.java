@@ -1,8 +1,6 @@
 package movie.service.bookmyshow.services;
 
 
-import movie.service.bookmyshow.models.BaseModel;
-import movie.service.bookmyshow.models.Movie;
 import movie.service.bookmyshow.models.Theatre;
 import movie.service.bookmyshow.repositories.CityRepository;
 import movie.service.bookmyshow.repositories.MovieRepository;
@@ -12,7 +10,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ShowServiceImpl implements ShowService {
@@ -30,7 +27,7 @@ public class ShowServiceImpl implements ShowService {
     @Override
     public List<Theatre> getTheatresByCity(String cityName, Date date, String movieName) {
 
-       // List<Theatre> theatreList = cityRepository.findByNameIgnoreCase(cityName);
+        // List<Theatre> theatreList = cityRepository.findByNameIgnoreCase(cityName);
 
       /*  List<Integer> screenList = theatreList.stream()
                 .flatMap(t -> t.getScreens().stream()).map(BaseModel::getId)
