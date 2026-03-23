@@ -1,7 +1,7 @@
 package movie.service.bookmyshow.controllers;
 
 import movie.service.bookmyshow.dtos.SeatInventoryDto;
-import movie.service.bookmyshow.models.Screen;
+import movie.service.bookmyshow.models.Theatre;
 import movie.service.bookmyshow.services.TheatreIntegrationService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,7 +22,7 @@ public class SeatController {
     }
 
     @PostMapping
-    public List<Screen> initializeSeats(@RequestBody SeatInventoryDto dto) {
+    public List<Theatre> initializeSeats(@RequestBody SeatInventoryDto dto) {
         return theatreIntegrationService.initializeSeatInventory(dto.getRows(), dto.getSeatsPerRow(), dto.getCity(), dto.getTheatreName(), dto.getScreenCount());
     }
 }

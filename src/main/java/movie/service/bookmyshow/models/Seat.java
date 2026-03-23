@@ -1,5 +1,6 @@
 package movie.service.bookmyshow.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Data;
@@ -19,5 +20,6 @@ public class Seat extends BaseModel {
     private int topLeftY;
     @ManyToOne
     @JoinColumn(name = "screen_id")
+    @JsonBackReference(value = "screen-seat")
     private Screen screen;
 }

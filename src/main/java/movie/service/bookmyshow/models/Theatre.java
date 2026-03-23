@@ -1,5 +1,6 @@
 package movie.service.bookmyshow.models;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -16,6 +17,7 @@ public class Theatre extends BaseModel {
     private String name;
     private String address;
     @OneToMany(mappedBy = "theatre", fetch = FetchType.LAZY)
+    @JsonManagedReference(value = "theatre-screen")
     private List<Screen> screens = new java.util.ArrayList<>();
     @Enumerated(EnumType.ORDINAL)
     @Column(name = "theatre_type", nullable = true)

@@ -45,12 +45,12 @@ public class TheatreIntegrationServiceImpl implements TheatreIntegrationService 
         } else {
             throw new IllegalArgumentException("Theatre already exists in this city");
         }
-        Theatre theatre = Theatre.builder()
-                .name(theatreDto.getName())
-                .address(theatreDto.getAddress())
-                .type(theatreDto.getType() != null ? theatreDto.getType() : Theatre.TheatreType.MULTIPLEX)
-                .integrationType(theatreDto.getIntegrationType() != null ? theatreDto.getIntegrationType() : Theatre.IntegrationType.NEW)
-                .build();
+        // Create theatre without Lombok builder for compatibility
+        Theatre theatre = new Theatre();
+        theatre.setName(theatreDto.getName());
+        theatre.setAddress(theatreDto.getAddress());
+        theatre.setType(theatreDto.getType() != null ? theatreDto.getType() : Theatre.TheatreType.MULTIPLEX);
+        theatre.setIntegrationType(theatreDto.getIntegrationType() != null ? theatreDto.getIntegrationType() : Theatre.IntegrationType.NEW);
         theatreRepository.save(theatre);
         if (!cityOptional.isPresent()) {
             city.getTheatres().add(theatre);
@@ -60,15 +60,16 @@ public class TheatreIntegrationServiceImpl implements TheatreIntegrationService 
 
     @Override
     @Transactional
-    public List<Screen> initializeSeatInventory(int rows, int col, String city, String theatreName, int screenCount) {
+    public List<Theatre> initializeSeatInventory(int rows, int col, String cities, String theatreName, int screenCount) {
 
-        Optional<City> cityOptional = cityRepository.findByNameAndTheatres_NameIn(city, List.of(theatreName));
+        Optional<City> cityOptional = cityRepository.findByNameAndTheatres_NameIn(cities, List.of(theatreName));
+        City city = cityOptional.get();
 
         if (cityOptional.isEmpty()) {
             throw new IllegalArgumentException("Theatre not found in this city");
         }
         List<Movie> movieList = new ArrayList<>();
-        List<Seat> seats = new ArrayList<>();
+        List<Seat> allSeats = new ArrayList<>();
         List<Screen> screenList = new ArrayList<>();
         List<Show> showList = new ArrayList<>();
         List<ShowSeat> showSeatList = new ArrayList<>();
@@ -89,18 +90,24 @@ public class TheatreIntegrationServiceImpl implements TheatreIntegrationService 
                         .topLeftX((row + 1) * seatNum)
                         .topLeftY((row + 1) * row - 1)
                         .build();
-                seats.add(seat);
+                allSeats.add(seat);
                 count++;
             }
         }
+        Theatre theatre = theatreList.get(0);
         for (int i = 0; i < screenCount; i++) {
             Screen screen = new Screen();
             screen.setName("Screen " + ('A' + i));
-            screen.setSeats(seats);
+            screen.setSeats(allSeats);
+            // Bind screen to its theatre (owning side of the relationship)
+            screen.setTheatre(theatre);
             screenRepository.save(screen);
             screenList.add(screen);
+            // Do not mutate theatre.getScreens() here to avoid duplicates; ownership is on Screen
         }
-        theatreRepository.saveAll(theatreList);
+        List<Seat> seatList = seatRepository.saveAll(allSeats);
+        List<Screen> screenList1 = screenRepository.saveAll(screenList);
+
         //show
         Show show = new Show();
         Movie movie = new Movie();
@@ -117,26 +124,26 @@ public class TheatreIntegrationServiceImpl implements TheatreIntegrationService 
         //showSeatList
         ShowSeat showSeat = new ShowSeat();
         showSeat.setShow(show);
-        showSeat.setSeat(seats.get(0));
+        showSeat.setSeat(allSeats.get(0));
         showSeat.setSeatStatus(SeatStatus.AVAILABLE);
         showSeatList.add(showSeat);
 
         List<Movie> movieList1 = movieRepository.saveAll(movieList);
-        List<Seat> seatList = seatRepository.saveAll(seats);
+
         //List<Screen> screenList1 = screenRepository.saveAll(screenList);
-        theatreList.get(0).getScreens().addAll(screenList);
+        // Align theatre's screens collection with newly created screens for consistency
+        theatre.getScreens().addAll(screenList);
 
         List<Show> showList1 = showRepository.saveAll(showList);
         List<ShowSeat> showSeatList1 = showSeatRepository.saveAll(showSeatList);
-        theatreList.stream().forEach(x -> x.getScreens().addAll(screenList));
-
-        //cityRepository.save(cityOptional.get());
+        // If there are multiple theatres, you may want to mirror screens to all; currently ignored to avoid duplicates
+        theatreList = theatreRepository.saveAll(theatreList);
+        cityRepository.save(city);
 
         if (seatList.isEmpty() || showList1.isEmpty() || showSeatList1.isEmpty() || movieList1.isEmpty()) {
             throw new IllegalStateException("Failed to initialize seat inventory");
         }
 
-        return screenList;
+        return theatreList;
     }
 }
-
