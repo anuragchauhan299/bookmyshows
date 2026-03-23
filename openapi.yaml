@@ -1,0 +1,391 @@
+openapi: 3.0.3
+info:
+  title: BookMyShow Booking API
+  version: 1.0.0
+  description: OpenAPI specification for the BookMyShow booking platform. Covers shows, theatres, seat holds, bookings, payments, tickets, and webhook events.
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+  - url: https://api.bookmyshow.example
+    description: Production server
+security:
+  - BearerAuth: [ ]
+tags:
+  - name: Shows
+  - name: Theatres
+  - name: Bookings
+  - name: Tickets
+  - name: Payments
+  - name: Health
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Show:
+      type: object
+      properties:
+        showId:
+          type: string
+        title:
+          type: string
+        language:
+          type: string
+        durationMins:
+          type: integer
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        rating:
+          type: number
+          format: float
+        theatres:
+          type: array
+          items:
+            $ref: '#/components/schemas/Theatre'
+        price:
+          type: number
+          format: double
+    Theatre:
+      type: object
+      properties:
+        theatreId:
+          type: string
+        name:
+          type: string
+        city:
+          type: string
+        country:
+          type: string
+        screens:
+          type: array
+          items:
+            type: string
+        seatMap:
+          type: object
+          additionalProperties: true
+    Seat:
+      type: object
+      properties:
+        seatId:
+          type: string
+        row:
+          type: string
+        number:
+          type: integer
+        price:
+          type: number
+          format: double
+        available:
+          type: boolean
+    BookingRequestHold:
+      type: object
+      properties:
+        showId:
+          type: string
+        theatreId:
+          type: string
+        seats:
+          type: array
+          items:
+            type: string
+        customer:
+          type: object
+          properties:
+            name:
+              type: string
+            email:
+              type: string
+            phone:
+              type: string
+        expiresInMin:
+          type: integer
+          description: Minutes before hold expires
+          default: 5
+      required: [ showId, theatreId, seats ]
+    BookingResponse:
+      type: object
+      properties:
+        bookingId:
+          type: string
+        status:
+          type: string
+        totalAmount:
+          type: number
+          format: double
+        currency:
+          type: string
+        seats:
+          type: array
+          items:
+            type: string
+        expiresAt:
+          type: string
+          format: date-time
+    ConfirmBookingRequest:
+      type: object
+      properties:
+        bookingId:
+          type: string
+        payment:
+          type: object
+          properties:
+            gateway:
+              type: string
+            token:
+              type: string
+            method:
+              type: string
+      required: [ bookingId, payment ]
+    Ticket:
+      type: object
+      properties:
+        ticketId:
+          type: string
+        bookingId:
+          type: string
+        showId:
+          type: string
+        theatreId:
+          type: string
+        seatList:
+          type: array
+          items:
+            type: string
+        issuedAt:
+          type: string
+          format: date-time
+        qrCode:
+          type: string
+    PaymentWebhook:
+      type: object
+      properties:
+        event:
+          type: string
+        data:
+          type: object
+        signature:
+          type: string
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+paths:
+  /shows:
+    get:
+      tags:
+        - Shows
+      summary: Search shows
+      description: Retrieve shows based on city/date/filters
+      parameters:
+        - in: query
+          name: city
+          schema:
+            type: string
+          description: City to search in
+        - in: query
+          name: date
+          schema:
+            type: string
+            format: date
+          description: Show date
+        - in: query
+          name: language
+          schema:
+            type: string
+          description: Language filter
+      responses:
+        '200':
+          description: A list of shows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Show'
+        '400':
+          description: Bad request
+  /shows/{showId}:
+    get:
+      tags:
+        - Shows
+      summary: Get show details
+      parameters:
+        - in: path
+          name: showId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Show details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Show'
+        '404':
+          description: Not found
+  /theatres/{theatreId}/seats:
+    get:
+      tags:
+        - Theatres
+      summary: Get available seats for a theatre
+      parameters:
+        - in: path
+          name: theatreId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: showTime
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Seats list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Seat'
+        '400':
+          description: Bad request
+  /bookings/hold:
+    post:
+      tags:
+        - Bookings
+      summary: Hold seats for a show
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingRequestHold'
+      responses:
+        '200':
+          description: Booking hold created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '409':
+          description: Seats unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /bookings/confirm:
+    post:
+      tags:
+        - Bookings
+      summary: Confirm a booking and collect payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmBookingRequest'
+      responses:
+        '200':
+          description: Booking confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /bookings/{bookingId}:
+    get:
+      tags:
+        - Bookings
+      summary: Get booking status
+      parameters:
+        - in: path
+          name: bookingId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Booking details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '404':
+          description: Not found
+  /tickets/{ticketId}:
+    get:
+      tags:
+        - Tickets
+      summary: Get ticket details
+      parameters:
+        - in: path
+          name: ticketId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Ticket details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+        '404':
+          description: Not found
+  /payments/webhook:
+    post:
+      tags:
+        - Payments
+      summary: Payment gateway webhook
+      security:
+        - [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentWebhook'
+      responses:
+        '200':
+          description: Acknowledged
+        '400':
+          description: Bad Request
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      security:
+        - [ ]
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: OK
