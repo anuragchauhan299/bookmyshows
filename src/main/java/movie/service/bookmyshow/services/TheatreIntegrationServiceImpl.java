@@ -22,10 +22,11 @@ public class TheatreIntegrationServiceImpl implements TheatreIntegrationService 
     private final ShowSeatRepository showSeatRepository;
     private final ScreenRepository screenRepository;
     private final MovieRepository movieRepository;
+    private final SeatTypeShowRepository seatTypeShowRepository;
 
     @Autowired
     public TheatreIntegrationServiceImpl(CityRepository cityRepository, TheatreRepository theatreRepository, ShowRepository showRepository,
-                                         SeatRepository seatRepository, ShowSeatRepository showSeatRepository, ScreenRepository screenRepository, MovieRepository movieRepository) {
+                                         SeatRepository seatRepository, ShowSeatRepository showSeatRepository, ScreenRepository screenRepository, MovieRepository movieRepository, SeatTypeShowRepository seatTypeShowRepository) {
         this.cityRepository = cityRepository;
         this.theatreRepository = theatreRepository;
         this.showRepository = showRepository;
@@ -33,6 +34,7 @@ public class TheatreIntegrationServiceImpl implements TheatreIntegrationService 
         this.showSeatRepository = showSeatRepository;
         this.screenRepository = screenRepository;
         this.movieRepository = movieRepository;
+        this.seatTypeShowRepository = seatTypeShowRepository;
     }
 
     @Transactional
@@ -127,6 +129,12 @@ public class TheatreIntegrationServiceImpl implements TheatreIntegrationService 
         showSeat.setSeat(allSeats.get(0));
         showSeat.setSeatStatus(SeatStatus.AVAILABLE);
         showSeatList.add(showSeat);
+
+        SeatTypeShow seatTypeShow = new SeatTypeShow();
+        seatTypeShow.setShow(show);
+        seatTypeShow.setSeatType(SeatType.GOLD);
+        seatTypeShow.setPrice(100.0);
+        seatTypeShowRepository.save(seatTypeShow);
 
         List<Movie> movieList1 = movieRepository.saveAll(movieList);
 
